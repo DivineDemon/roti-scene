@@ -1,0 +1,163 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String? // Hashed password for Credentials provider
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts         Account[]
+  sessions         Session[]
+  experiences      Experience[]
+  groupMemberships GroupMember[]
+  comments         ExperienceComment[]
+  ownedRestaurants Restaurant[]
+  createdGroups    Group[]
+
+  @@map("users")
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Business Models
+
+model Restaurant {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  cuisine   String?
+  addedById String
+  addedBy   User     @relation(fields: [addedById], references: [id])
+  createdAt DateTime @default(now())
+
+  experiences Experience[]
+
+  @@map("restaurants")
+}
+
+model Group {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  members     GroupMember[]
+  experiences Experience[]
+
+  @@map("groups")
+}
+
+model GroupMember {
+  userId   String
+  groupId  String
+  role     String?
+  joinedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([userId, groupId])
+  @@map("group_members")
+}
+
+model Experience {
+  id           String    @id @default(uuid())
+  restaurantId String
+  groupId      String?
+  userId       String
+  visitDate    DateTime? @db.Date
+  rating       Int?
+  review       String?
+  createdAt    DateTime  @default(now())
+
+  restaurant Restaurant          @relation(fields: [restaurantId], references: [id])
+  group      Group?              @relation(fields: [groupId], references: [id])
+  user       User                @relation(fields: [userId], references: [id])
+  comments   ExperienceComment[]
+  items      ExperienceItem[]
+
+  @@map("experiences")
+}
+
+model ExperienceComment {
+  id              String   @id @default(uuid())
+  experienceId    String
+  userId          String
+  content         String
+  parentCommentId String?
+  createdAt       DateTime @default(now())
+
+  experience    Experience          @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  user          User                @relation(fields: [userId], references: [id])
+  parentComment ExperienceComment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  replies       ExperienceComment[] @relation("CommentReplies")
+
+  @@map("experience_comments")
+}
+
+model ExperienceItem {
+  id           String   @id @default(uuid())
+  experienceId String
+  name         String
+  price        Decimal? @db.Decimal(10, 2)
+  rating       Int?
+  photoUrl     String?
+  comments     String?
+
+  experience Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+
+  @@map("experience_items")
+}
