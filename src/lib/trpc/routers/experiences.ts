@@ -28,6 +28,7 @@ export const experienceRouter = router({
 				group: {
 					select: { name: true },
 				},
+				items: true,
 			},
 			orderBy: { createdAt: "desc" },
 		});
@@ -39,9 +40,19 @@ export const experienceRouter = router({
 				restaurantName: z.string(),
 				cuisine: z.string().optional(),
 				address: z.string().optional(),
-				rating: z.number().min(1).max(5),
+				rating: z.number().min(1).max(5).optional(),
 				review: z.string().optional(),
 				groupId: z.string().optional(),
+				priceLevel: z.number().min(1).max(5).optional(),
+				photos: z.array(z.string()).optional(),
+				items: z
+					.array(
+						z.object({
+							name: z.string(),
+							photoUrls: z.array(z.string()).optional(),
+						}),
+					)
+					.optional(),
 			}),
 		)
 		.mutation(async ({ ctx, input }) => {
@@ -71,6 +82,11 @@ export const experienceRouter = router({
 					rating: input.rating,
 					review: input.review,
 					groupId: input.groupId,
+					priceLevel: input.priceLevel,
+					photos: input.photos || [],
+					items: {
+						create: input.items || [],
+					},
 				},
 			});
 		}),

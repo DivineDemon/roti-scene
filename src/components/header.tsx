@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
+import { User as UserIcon } from "lucide-react";
 
 export function Header() {
 	const pathname = usePathname();
@@ -29,14 +30,25 @@ export function Header() {
 			<div className="flex items-center gap-4">
 				<ThemeToggle />
 				{session && (
-					<Button
-						variant="outline"
-						size="sm"
-						onClick={() => signOut({ callbackUrl: "/" })}
-						className="font-bold border-2 border-foreground shadow-neo-sm hover:translate-x-px hover:translate-y-px"
-					>
-						LOG_OUT
-					</Button>
+					<>
+						<Button
+							variant="outline"
+							size="icon"
+							asChild
+							className="border-2 border-foreground shadow-neo-sm hover:translate-x-px hover:translate-y-px"
+						>
+							<Link href="/profile">
+								<UserIcon className="h-4 w-4" />
+							</Link>
+						</Button>
+						<Button
+							variant="outline"
+							onClick={() => signOut({ callbackUrl: "/" })}
+							className="font-bold border-2 border-foreground shadow-neo-sm hover:translate-x-px hover:translate-y-px"
+						>
+							LOG_OUT
+						</Button>
+					</>
 				)}
 			</div>
 		</header>

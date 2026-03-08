@@ -96,6 +96,7 @@ model Group {
 
   members     GroupMember[]
   experiences Experience[]
+  invites     GroupInvite[]
 
   @@map("groups")
 }
@@ -121,6 +122,8 @@ model Experience {
   visitDate    DateTime? @db.Date
   rating       Int?
   review       String?
+  priceLevel   Int?
+  photos       String[]
   createdAt    DateTime  @default(now())
 
   restaurant Restaurant          @relation(fields: [restaurantId], references: [id])
@@ -154,10 +157,22 @@ model ExperienceItem {
   name         String
   price        Decimal? @db.Decimal(10, 2)
   rating       Int?
-  photoUrl     String?
+  photoUrls    String[]
   comments     String?
 
   experience Experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
 
   @@map("experience_items")
+}
+
+model GroupInvite {
+  id        String   @id @default(uuid())
+  groupId   String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@map("group_invites")
 }

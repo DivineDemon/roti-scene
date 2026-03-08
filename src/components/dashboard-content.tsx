@@ -2,9 +2,11 @@
 
 import { useSession } from "next-auth/react";
 import { trpc } from "@/lib/trpc/client";
-import { Button } from "@/components/ui/button";
-import { Plus, Users, Utensils, Star, MessageSquare } from "lucide-react";
+import { Users, Utensils, Star } from "lucide-react";
 import AddExperienceModal from "@/components/add-experience-modal";
+import CommentsSection from "@/components/comments-section";
+import CreateGroupModal from "@/components/groups/create-group-modal";
+import InviteLinkModal from "@/components/groups/invite-link-modal";
 
 export default function DashboardContent() {
 	const { data: session } = useSession();
@@ -38,19 +40,14 @@ export default function DashboardContent() {
 
 						{loadingGroups ? (
 							<p className="text-muted-foreground font-medium italic animate-pulse">
-								SCANNIG_CIRCLES...
+								SCANNING_CIRCLES...
 							</p>
 						) : !groups || groups.length === 0 ? (
 							<div className="space-y-4">
 								<p className="text-muted-foreground font-medium italic">
 									You haven't joined any circles yet.
 								</p>
-								<Button
-									variant="outline"
-									className="w-full border-2 border-foreground shadow-neo-sm"
-								>
-									<Plus className="mr-2 h-4 w-4" /> CREATE_NEW_CIRCLE
-								</Button>
+								<CreateGroupModal />
 							</div>
 						) : (
 							<div className="flex flex-col gap-3">
@@ -58,23 +55,21 @@ export default function DashboardContent() {
 								{groups.map((group: any) => (
 									<div
 										key={group.id}
-										className="border-2 border-foreground p-3 hover:bg-foreground hover:text-background transition-colors cursor-pointer group"
+										className="border-2 border-foreground p-3 flex justify-between items-center"
 									>
-										<p className="font-black uppercase tracking-tight">
-											{group.name}
-										</p>
-										<p className="text-xs font-bold opacity-70 group-hover:opacity-100">
-											{group._count.members} MEMBERS {"//"}
-											{group._count.experiences} SCENES
-										</p>
+										<div>
+											<p className="font-black uppercase tracking-tight">
+												{group.name}
+											</p>
+											<p className="text-xs font-bold opacity-70">
+												{group._count.members} MEMBERS {"//"}{" "}
+												{group._count.experiences} SCENES
+											</p>
+										</div>
+										<InviteLinkModal groupId={group.id} />
 									</div>
 								))}
-								<Button
-									variant="outline"
-									className="w-full border-2 border-foreground shadow-neo-sm mt-2"
-								>
-									<Plus className="mr-2 h-4 w-4" /> NEW_CIRCLE
-								</Button>
+								<CreateGroupModal />
 							</div>
 						)}
 					</div>
@@ -121,9 +116,7 @@ export default function DashboardContent() {
 											</div>
 											<div className="text-right">
 												<p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">
-													{exp.visitDate
-														? new Date(exp.visitDate).toLocaleDateString()
-														: ""}
+													{exp.priceLevel ? "$".repeat(exp.priceLevel) : ""}
 												</p>
 												<div className="flex gap-0.5 mt-1 justify-end">
 													{[1, 2, 3, 4, 5].map((star) => (
@@ -136,10 +129,60 @@ export default function DashboardContent() {
 											</div>
 										</div>
 										<div className="p-4">
+											{exp.photos && exp.photos.length > 0 && (
+												<div className="mt-2 mb-4 flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
+													{exp.photos.map((photo: string) => (
+														// biome-ignore lint/performance/noImgElement: arbitrary image domain
+														<img
+															key={photo}
+															src={photo}
+															alt="Restaurant"
+															className="h-32 object-cover border-2 border-foreground"
+														/>
+													))}
+												</div>
+											)}
 											<p className="font-medium italic leading-relaxed">
 												"{exp.review}"
 											</p>
-											<div className="mt-4 pt-4 border-t-2 border-foreground/10 flex justify-between items-center">
+
+											{exp.items && exp.items.length > 0 && (
+												<div className="mt-4 space-y-3">
+													<p className="text-xs font-black uppercase tracking-widest border-b-2 border-foreground/20 pb-1">
+														Items Consumed
+													</p>
+													{exp.items.map(
+														(item: {
+															id: string;
+															name: string;
+															photoUrls: string[];
+														}) => (
+															<div
+																key={item.id}
+																className="flex flex-col gap-1"
+															>
+																<p className="text-sm font-bold">{item.name}</p>
+																{item.photoUrls &&
+																	item.photoUrls.length > 0 && (
+																		<div className="flex gap-2 min-h-16">
+																			{item.photoUrls.map((url: string) => (
+																				// biome-ignore lint/performance/noImgElement: arbitrary image domain
+																				<img
+																					key={url}
+																					src={url}
+																					alt={item.name}
+																					className="h-16 object-cover border-2 border-foreground"
+																				/>
+																			))}
+																		</div>
+																	)}
+															</div>
+														),
+													)}
+												</div>
+											)}
+
+											<div className="mt-4 pt-4 border-t-2 border-foreground/10 flex items-center">
 												<div className="flex items-center gap-2">
 													<div className="h-6 w-6 bg-secondary border border-foreground rounded-none flex items-center justify-center font-black text-[10px] uppercase">
 														{exp.user.name?.charAt(0) || "U"}
@@ -148,14 +191,8 @@ export default function DashboardContent() {
 														{exp.user.name}
 													</span>
 												</div>
-												<Button
-													variant="ghost"
-													size="sm"
-													className="h-8 px-2 font-black text-[10px] uppercase gap-1 hover:bg-foreground hover:text-background"
-												>
-													<MessageSquare className="h-3 w-3" /> COMMENTS (0)
-												</Button>
 											</div>
+											<CommentsSection experienceId={exp.id} />
 										</div>
 									</div>
 								))}
