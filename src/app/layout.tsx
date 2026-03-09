@@ -17,7 +17,7 @@ const spaceMono = Space_Mono({
 
 export const metadata: Metadata = {
 	title: "Roti Scene",
-	description: "Private restaurant sharing and rating for buddies.",
+	description: "Private restaurant sharing and rating for friends.",
 };
 
 export default function RootLayout({
